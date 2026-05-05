@@ -194,6 +194,46 @@ POST /api/query        — Natural language query to Gemini + MongoDB MCP agent
 
 ---
 
+## Changelog
+
+### v2.0 — May 5, 2026 — AI Engine Migration: Claude → Gemini 2.5 Pro
+
+> **Full platform migration from Anthropic Claude to Google Gemini 2.5 Pro.**
+
+This version migrated the entire SENTINEL AI reasoning engine from Anthropic's Claude (claude-opus-4-7) to **Google Gemini 2.5 Pro** via the **Google Cloud Agent Development Kit (ADK) 1.32** framework. The migration was completed to align with the **Google Cloud Rapid Agent Hackathon 2026** requirements and unlock the full ADK + MongoDB MCP partner integration stack.
+
+**What changed:**
+
+| Component | Before (v1.x) | After (v2.0) |
+|-----------|--------------|--------------|
+| AI Model | `claude-opus-4-7` (Anthropic) | `gemini-2.5-pro` (Google) |
+| Agent Framework | Direct Anthropic API calls | Google ADK 1.32 `Runner` |
+| Tool Integration | Custom function calling | MongoDB MCP Server via `McpToolset` |
+| API Key | `ANTHROPIC_API_KEY` | `GEMINI_API_KEY` (AI Studio / GCP) |
+| UI model label | `claude-opus-4-7` | `gemini-2.5-pro` |
+| Legal text | "powered by Anthropic Claude" | "powered by Google Gemini 2.5 Pro" |
+
+**Why Gemini 2.5 Pro:**
+- Native ADK integration — `Agent(model="gemini-2.5-pro")` with zero adapter code
+- Official MongoDB MCP partner stack (`McpToolset` + `StdioConnectionParams`)
+- Gemini 2.5 Pro's extended context window handles full contract dataset summaries
+- Required for Google Cloud Rapid Agent Hackathon eligibility
+
+**Files changed:**
+- `agent/sentinel_agent.py` — model swapped, ADK runner introduced
+- `agent/tools.py` — MCP toolset replaces direct function calls
+- `main.py` — ADK `Runner` + `InMemorySessionService` wired in
+- `index.html` — UI model label + consent gate legal text updated
+- `requirements.txt` — `google-adk>=1.32`, `anthropic` dependency removed
+
+---
+
+### v1.x — April 2026 — Initial Build (Anthropic Claude)
+
+Original build using `claude-opus-4-7` with direct Anthropic API calls and custom MongoDB tool functions. Deprecated in favor of the ADK-native v2.0 stack.
+
+---
+
 ## License
 
 MIT License — see [LICENSE](LICENSE)

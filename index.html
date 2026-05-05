@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENTINEL — OSINT Contract Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #07080f;
+  --surface:  #0e1018;
+  --card:     #131520;
+  --border:   #1e2235;
+  --accent:   #ef4444;
+  --accent2:  #f97316;
+  --blue:     #60a5fa;
+  --green:    #22c55e;
+  --yellow:   #eab308;
+  --text:     #e2e8f0;
+  --muted:    #64748b;
+  --dim:      #94a3b8;
+  --font-ui:  'Inter', sans-serif;
+  --font-hd:  'Syne', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-ui); font-size: 14px; overflow-x: hidden; }
+body { display: flex; flex-direction: column; }
+
+/* ── TOP NAV ── */
+.nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; height: 56px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-brand { display: flex; align-items: center; gap: 10px; }
+.nav-brand .icon { width: 28px; height: 28px; fill: var(--accent); }
+.nav-brand h1 { font-family: var(--font-hd); font-size: 1.1rem; font-weight: 800; letter-spacing: 3px; color: var(--text); }
+.nav-brand span { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent); letter-spacing: 2px; }
+.nav-status { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.7rem; color: var(--green); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── LAYOUT ── */
+.shell { display: grid; grid-template-columns: 260px 1fr 320px; flex: 1; min-height: 0; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow-y: auto; padding: 16px 0;
+}
+.sidebar-section { padding: 0 16px 16px; }
+.sidebar-label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.stat-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px; margin-bottom: 8px;
+}
+.stat-card .stat-value { font-family: var(--font-hd); font-size: 1.3rem; font-weight: 800; color: var(--accent); }
+.stat-card .stat-label { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+.vendor-list { list-style: none; }
+.vendor-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 8px; border-radius: 5px; margin-bottom: 3px; cursor: pointer;
+  transition: background .15s;
+}
+.vendor-item:hover { background: var(--card); }
+.vendor-item .v-name { font-size: 0.75rem; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+.vendor-item .v-val { font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent2); white-space: nowrap; }
+
+/* ── MAIN CONTENT ── */
+.main { display: flex; flex-direction: column; overflow: hidden; }
+
+/* Search bar */
+.search-bar {
+  padding: 16px 20px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; gap: 10px; align-items: center;
+}
+.search-bar input {
+  flex: 1; background: var(--card); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 14px; color: var(--text);
+  font-family: var(--font-mono); font-size: 0.8rem; outline: none;
+  transition: border-color .15s;
+}
+.search-bar input:focus { border-color: var(--blue); }
+.search-bar input::placeholder { color: var(--muted); }
+.btn {
+  padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;
+  font-family: var(--font-ui); font-size: 0.8rem; font-weight: 600;
+  transition: opacity .15s;
+}
+.btn:hover { opacity: .85; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-ghost { background: var(--card); border: 1px solid var(--border); color: var(--dim); }
+
+/* Tabs */
+.tabs {
+  display: flex; gap: 0; padding: 0 20px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.tab {
+  padding: 10px 18px; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  color: var(--muted); border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.tab:hover:not(.active) { color: var(--dim); }
+
+/* Contract table */
+.table-wrap { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.contract-table { width: 100%; border-collapse: collapse; }
+.contract-table th {
+  text-align: left; padding: 8px 10px; font-family: var(--font-mono);
+  font-size: 0.62rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase;
+  border-bottom: 1px solid var(--border); position: sticky; top: 0;
+  background: var(--bg); z-index: 1;
+}
+.contract-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.contract-table tr:hover td { background: var(--card); }
+.contract-table tr { cursor: pointer; }
+.td-vendor { font-weight: 600; color: var(--text); font-size: 0.82rem; }
+.td-agency { font-size: 0.72rem; color: var(--dim); }
+.td-title { font-size: 0.78rem; color: var(--dim); max-width: 220px; }
+.td-value { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); font-weight: 600; white-space: nowrap; }
+.td-date { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+.badge {
+  display: inline-block; padding: 2px 6px; border-radius: 3px;
+  font-family: var(--font-mono); font-size: 0.6rem; font-weight: 600;
+}
+.badge-red   { background: rgba(239,68,68,.15); color: var(--accent); }
+.badge-blue  { background: rgba(96,165,250,.15); color: var(--blue); }
+.badge-green { background: rgba(34,197,94,.15);  color: var(--green); }
+.badge-gray  { background: rgba(100,116,139,.15); color: var(--muted); }
+
+/* Loading */
+.loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--muted); font-family: var(--font-mono); font-size: 0.8rem; }
+.spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; margin-right: 10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── RIGHT PANEL — AI CHAT ── */
+.ai-panel {
+  background: var(--surface); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.ai-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.ai-header .ai-icon { width: 22px; height: 22px; fill: var(--blue); }
+.ai-header h3 { font-family: var(--font-hd); font-size: 0.9rem; font-weight: 700; }
+.ai-header .ai-model { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); margin-left: auto; }
+.ai-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.msg {
+  display: flex; flex-direction: column; gap: 4px;
+  max-width: 100%;
+}
+.msg-user .msg-bubble {
+  background: rgba(96,165,250,.12); border: 1px solid rgba(96,165,250,.2);
+  border-radius: 10px 10px 2px 10px; padding: 10px 12px;
+  color: var(--blue); font-size: 0.82rem; align-self: flex-end;
+  max-width: 85%;
+}
+.msg-ai .msg-bubble {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 2px 10px 10px 10px; padding: 10px 12px;
+  font-size: 0.82rem; line-height: 1.6; white-space: pre-wrap;
+}
+.msg-label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); }
+.msg-user .msg-label { text-align: right; }
+.ai-input-area {
+  padding: 14px 16px; border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.ai-input-area textarea {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px 12px; color: var(--text);
+  font-family: var(--font-ui); font-size: 0.8rem; resize: none; outline: none;
+  transition: border-color .15s; min-height: 72px;
+}
+.ai-input-area textarea:focus { border-color: var(--blue); }
+.ai-input-area textarea::placeholder { color: var(--muted); }
+.ai-actions { display: flex; justify-content: space-between; align-items: center; }
+.ai-hint { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); }
+.quick-queries { display: flex; flex-direction: column; gap: 4px; padding: 0 16px 12px; }
+.quick-q {
+  font-size: 0.72rem; color: var(--muted); cursor: pointer; padding: 5px 8px;
+  border-radius: 4px; border: 1px solid var(--border); transition: all .15s;
+}
+.quick-q:hover { background: var(--card); color: var(--dim); border-color: var(--blue); }
+
+/* ── CONTRACT DETAIL MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7);
+  display: none; align-items: center; justify-content: center; z-index: 200;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; padding: 28px;
+}
+.modal h2 { font-family: var(--font-hd); font-size: 1.1rem; margin-bottom: 16px; }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.modal-field .field-label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); letter-spacing: 1px; margin-bottom: 3px; }
+.modal-field .field-value { font-size: 0.82rem; color: var(--text); }
+.modal-field .field-value.accent { color: var(--accent); font-family: var(--font-mono); font-weight: 600; }
+.modal-desc { font-size: 0.82rem; color: var(--dim); line-height: 1.6; padding-top: 12px; border-top: 1px solid var(--border); }
+.modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.2rem; }
+
+/* ── EMPTY STATE ── */
+.empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty svg { width: 40px; height: 40px; fill: var(--border); margin-bottom: 12px; }
+.empty p { font-family: var(--font-mono); font-size: 0.78rem; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar, .ai-panel { display: none; }
+}
+
+/* ── CONSENT GATE ── */
+#consent-gate {
+  position:fixed;inset:0;z-index:99999;
+  background:rgba(7,8,15,0.97);
+  backdrop-filter:blur(12px);
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
+  transition:opacity 0.4s ease;
+}
+#consent-gate.hidden{opacity:0;pointer-events:none}
+.gate-modal {
+  background:#131520;
+  border:1px solid #1e2235;
+  border-top:3px solid #ef4444;
+  border-radius:12px;
+  max-width:680px;width:100%;
+  max-height:90vh;
+  display:flex;flex-direction:column;
+  box-shadow:0 24px 80px rgba(0,0,0,0.8);
+}
+.gate-header { padding:24px 28px 20px; border-bottom:1px solid #1e2235; flex-shrink:0; }
+.gate-header .gmark { display:flex;align-items:center;gap:10px;margin-bottom:16px; }
+.gate-header .gmark h1 { font-family:var(--font-hd);font-size:1.3rem;font-weight:800;letter-spacing:4px; }
+.gate-header .gmark .gver { font-family:var(--font-mono);font-size:0.6rem;color:#ef4444;border:1px solid #ef4444;border-radius:3px;padding:2px 6px; }
+.gate-header h2 { font-family:var(--font-hd);font-size:0.95rem;font-weight:700;letter-spacing:1px;margin-bottom:6px; }
+.gate-header p { font-size:0.8rem;color:#64748b;line-height:1.5; }
+.gate-scroll { flex:1;overflow-y:auto;padding:20px 28px;scrollbar-width:thin;scrollbar-color:#1e2235 transparent; }
+.gate-sec { margin-bottom:18px; }
+.gate-sec h3 { font-family:var(--font-mono);font-size:0.62rem;letter-spacing:2px;text-transform:uppercase;color:#ef4444;margin-bottom:8px; }
+.gate-sec p,.gate-sec li { font-size:0.8rem;color:#64748b;line-height:1.65; }
+.gate-sec ul { list-style:none;padding:0; }
+.gate-sec ul li { padding:3px 0 3px 14px;position:relative; }
+.gate-sec ul li::before { content:"\2192";position:absolute;left:0;color:#ef4444;opacity:0.6; }
+.warn-box { background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:10px 14px;margin:10px 0; }
+.gate-checks { padding:14px 28px;border-top:1px solid #1e2235;flex-shrink:0;display:flex;flex-direction:column;gap:8px; }
+.chk-row { display:flex;align-items:flex-start;gap:10px;padding:7px 10px;border-radius:6px;cursor:pointer;transition:background 0.2s; }
+.chk-row:hover { background:rgba(255,255,255,0.03); }
+.chk-row input { width:15px;height:15px;flex-shrink:0;margin-top:2px;accent-color:#ef4444;cursor:pointer; }
+.chk-row label { font-size:0.78rem;color:#64748b;line-height:1.5;cursor:pointer; }
+.chk-row label a { color:#60a5fa; }
+.chk-row strong { color:#e2e8f0; }
+.gate-foot { padding:14px 28px;border-top:1px solid #1e2235;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
+.gate-note { font-family:var(--font-mono);font-size:0.58rem;color:#64748b; }
+#btn-agree { background:#ef4444;color:#fff;border:none;border-radius:8px;padding:11px 26px;font-family:var(--font-hd);font-size:0.85rem;font-weight:700;letter-spacing:2px;cursor:pointer;opacity:0.35;pointer-events:none;transition:all 0.2s;white-space:nowrap; }
+#btn-agree.ready { opacity:1;pointer-events:auto; }
+#btn-agree.ready:hover { background:#dc2626;transform:translateY(-1px); }
+@media(max-width:600px){
+  #consent-gate{align-items:flex-end;padding:0;}
+  .gate-modal{border-radius:12px 12px 0 0;max-height:95vh;}
+}
+
+
+/* ── SENTINEL MAP ── */
+#sentinel-map { z-index:1; }
+#sentinel-map .leaflet-tile-pane { filter: grayscale(1) brightness(0.3) sepia(0.5) hue-rotate(180deg); }
+#sentinel-map .leaflet-control-attribution { background:rgba(7,8,15,0.8)!important; color:#64748b!important; font-size:0.55rem!important; }
+#sentinel-map .leaflet-control-zoom a { background:#0e1018!important; color:#e2e8f0!important; border-color:#1e2235!important; }
+#sentinel-map .leaflet-control-zoom a:hover { background:#131520!important; color:#ef4444!important; }
+.sentinel-popup .leaflet-popup-content-wrapper {
+  background:#131520!important; border:1px solid #1e2235!important;
+  border-radius:8px!important; color:#e2e8f0!important;
+  font-family:'Inter',sans-serif!important; font-size:0.78rem!important;
+  box-shadow:0 8px 32px rgba(0,0,0,0.8)!important; padding:0!important;
+}
+.sentinel-popup .leaflet-popup-tip { background:#131520!important; }
+.sentinel-popup .leaflet-popup-content { margin:0!important; }
+.sp-inner { padding:14px 16px; }
+.sp-vendor { font-family:'Syne',sans-serif; font-weight:700; font-size:0.85rem; color:#e2e8f0; margin-bottom:4px; }
+.sp-agency { font-size:0.72rem; color:#64748b; margin-bottom:8px; }
+.sp-value { font-family:'JetBrains Mono',monospace; font-size:0.9rem; color:#ef4444; font-weight:600; margin-bottom:6px; }
+.sp-meta { font-size:0.68rem; color:#475569; display:flex; gap:12px; flex-wrap:wrap; }
+.sp-cap { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:0.58rem; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); border-radius:3px; padding:2px 6px; color:#ef4444; margin:2px 2px 0 0; }
+
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+</head>
+<body>
+<div id="consent-gate" role="dialog" aria-modal="true">
+  <div class="gate-modal">
+    <div class="gate-header">
+      <div class="gmark">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="#ef4444"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+        <h1>SENTINEL</h1><span class="gver">OSINT</span>
+      </div>
+      <h2>RESEARCHER ACCESS AGREEMENT</h2>
+      <p>Read and accept the terms below to access SENTINEL. Checking all boxes constitutes a legally binding click-through agreement.</p>
+    </div>
+    <div class="gate-scroll">
+      <div class="gate-sec">
+        <h3>// What SENTINEL Is</h3>
+        <p>SENTINEL aggregates and analyzes <strong>publicly available U.S. federal government contract data</strong> from SAM.gov, USASpending.gov, and FPDS under the Federal Funding Accountability and Transparency Act (FFATA). All data is lawfully obtained public domain government records (17 U.S.C. § 105). AI analysis is powered by Anthropic Claude.</p>
+      </div>
+      <div class="gate-sec">
+        <h3>// Permitted Uses</h3>
+        <ul>
+          <li>Academic research, journalism, investigative reporting</li>
+          <li>Civil liberties and public accountability analysis</li>
+          <li>Civic tech development, hackathons, open-source projects</li>
+          <li>Personal education about government surveillance spending</li>
+          <li>Non-commercial OSINT research and threat intelligence</li>
+        </ul>
+      </div>
+      <div class="gate-sec">
+        <h3>// Prohibited Uses</h3>
+        <div class="warn-box"><p>You may <strong>NOT</strong> use SENTINEL to surveil or target individuals, gain commercial procurement advantage, bulk-scrape data, or facilitate unlawful surveillance activity.</p></div>
+      </div>
+      <div class="gate-sec">
+        <h3>// AI Disclaimer</h3>
+        <p>AI-generated analysis is for research context only and does not constitute legal, financial, or professional advice. Always verify against primary sources at SAM.gov.</p>
+      </div>
+      <div class="gate-sec">
+        <h3>// Your Privacy</h3>
+        <p>No accounts. No cookies. No tracking pixels. No data sales. IP logs deleted within 72 hours. Queries stored anonymously only. Full details at <a href="/privacy" target="_blank">Privacy Policy</a>.</p>
+      </div>
+    </div>
+    <div class="gate-checks">
+      <div class="chk-row">
+        <input type="checkbox" id="g_chk1" onchange="gateCheck()">
+        <label for="g_chk1">I am <strong>18 or older</strong> and accessing SENTINEL for lawful research, journalism, education, or civic purposes.</label>
+      </div>
+      <div class="chk-row">
+        <input type="checkbox" id="g_chk2" onchange="gateCheck()">
+        <label for="g_chk2">I understand this tool uses <strong>public government data</strong> and I will NOT use it to surveil, harass, or target any individual.</label>
+      </div>
+      <div class="chk-row">
+        <input type="checkbox" id="g_chk3" onchange="gateCheck()">
+        <label for="g_chk3">I agree to the <a href="/tos" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>.</label>
+      </div>
+    </div>
+    <div class="gate-foot">
+      <span class="gate-note">SENTINEL v2.0 &mdash; Indica Independent Media &mdash; May 2026</span>
+      <button id="btn-agree" onclick="gateAgree()">ENTER SENTINEL &rarr;</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    <div>
+      <h1>SENTINEL</h1>
+      <span>OSINT INTELLIGENCE</span>
+    </div>
+  </div>
+  <div class="nav-status">
+    <div class="status-dot"></div>
+    <span id="nav-status-text">CONNECTING...</span>
+  </div>
+  <div style="display:flex;gap:16px;align-items:center;">
+    <a href="/tos" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);text-decoration:none;letter-spacing:1px;opacity:0.7;transition:opacity 0.2s;" target="_blank" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">TOS</a>
+    <a href="/privacy" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);text-decoration:none;letter-spacing:1px;opacity:0.7;transition:opacity 0.2s;" target="_blank" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">PRIVACY</a>
+    <a href="/about" style="font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);text-decoration:none;letter-spacing:1px;opacity:0.7;transition:opacity 0.2s;" target="_blank" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">ABOUT</a>
+  </div>
+</nav>
+
+<!-- SHELL -->
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Intelligence Summary</div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total-val">—</div>
+        <div class="stat-label">Total Contract Value</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total-count" style="color:var(--blue)">—</div>
+        <div class="stat-label">Contracts Indexed</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Top Vendors by Value</div>
+      <ul class="vendor-list" id="vendor-list">
+        <li class="loading" style="padding:12px 0"><span class="spinner"></span></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Top Agencies</div>
+      <ul class="vendor-list" id="agency-list">
+        <li class="loading" style="padding:12px 0"><span class="spinner"></span></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="Search vendor, agency, contract title..." />
+      <button class="btn btn-primary" onclick="doSearch()">SEARCH</button>
+      <button class="btn btn-ghost" onclick="loadContracts()">ALL</button>
+    </div>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('contracts',this)">Contracts</div>
+      <div class="tab" onclick="switchTab('map',this)">Vendor Map</div>
+    </div>
+    <div class="table-wrap" id="tab-contracts">
+      <div class="loading"><span class="spinner"></span>Loading intelligence database...</div>
+    </div>
+    <div class="table-wrap" id="tab-map" style="display:none;padding:0;position:relative;overflow:hidden;">
+      <div id="sentinel-map" style="width:100%;height:100%;min-height:500px;background:#07080f;"></div>
+      <div id="map-legend" style="position:absolute;bottom:20px;left:20px;z-index:1000;background:rgba(13,16,32,0.92);border:1px solid #1e2235;border-radius:8px;padding:12px 16px;font-family:JetBrains Mono,monospace;font-size:0.65rem;color:#64748b;min-width:160px;backdrop-filter:blur(8px);">
+        <div style="color:#e2e8f0;font-weight:600;letter-spacing:2px;margin-bottom:8px;">CONTRACT VALUE</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="width:12px;height:12px;border-radius:50%;background:#ef4444;display:inline-block;"></span>&gt; $500M</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#f97316;display:inline-block;"></span>$100M–$500M</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="width:8px;height:8px;border-radius:50%;background:#eab308;display:inline-block;"></span>$10M–$100M</div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="width:6px;height:6px;border-radius:50%;background:#60a5fa;display:inline-block;"></span>&lt; $10M</div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid #1e2235;color:#94a3b8;" id="map-count">— contracts mapped</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- AI PANEL -->
+  <aside class="ai-panel">
+    <div class="ai-header">
+      <svg class="ai-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <h3>SENTINEL AI</h3>
+      <span class="ai-model">claude-opus-4-7</span>
+    </div>
+    <div class="ai-messages" id="ai-messages">
+      <div class="msg msg-ai">
+        <div class="msg-bubble">Ready. Ask me anything about government contracts, defense spending, vendor relationships, or anomalies in the data.
+
+Type a question or use the quick queries below.</div>
+        <div class="msg-label">SENTINEL</div>
+      </div>
+    </div>
+    <div class="quick-queries">
+      <div class="quick-q" onclick="askQuick('Who are the top 3 vendors by total contract value?')">▸ Top vendors by value</div>
+      <div class="quick-q" onclick="askQuick('Which agency has the highest total spending?')">▸ Highest spending agency</div>
+      <div class="quick-q" onclick="askQuick('Are there any vendors with contracts across multiple agencies?')">▸ Multi-agency vendors</div>
+      <div class="quick-q" onclick="askQuick('What are the largest contracts over $500M?')">▸ Contracts over $500M</div>
+    </div>
+    <div class="ai-input-area">
+      <textarea id="ai-input" placeholder="Ask SENTINEL about the data..." rows="3"></textarea>
+      <div class="ai-actions">
+        <span class="ai-hint">Shift+Enter for newline</span>
+        <button class="btn btn-primary" onclick="sendQuery()">ANALYZE →</button>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modal-content" style="position:relative">
+    <button class="modal-close" onclick="document.getElementById('modal').classList.remove('open')">✕</button>
+    <h2 id="modal-title"></h2>
+    <div class="modal-grid" id="modal-grid"></div>
+    <div class="modal-desc" id="modal-desc"></div>
+  </div>
+</div>
+
+<script>
+const API = '';  // same origin
+
+let allContracts = [];
+let currentTab = 'contracts';
+
+// ── Format helpers ────────────────────────────────────────────────────────────
+function fmtUSD(v) {
+  if (v >= 1e9) return '$' + (v/1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
+  return '$' + v.toLocaleString();
+}
+function fmtDate(d) {
+  if (!d || d === '—' || d === '-') return '—';
+  try {
+    var iso = /^\d{4}-\d{2}-\d{2}$/.test(d) ? d + 'T12:00:00' : d;
+    var dt = new Date(iso);
+    if (isNaN(dt.getTime())) return '—';
+    return dt.toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'});
+  } catch(e) { return '—'; }
+}
+function valueClass(v) {
+  if (v >= 1e9) return 'badge-red';
+  if (v >= 5e8) return 'badge-red';
+  if (v >= 1e8) return 'badge-blue';
+  return 'badge-gray';
+}
+
+// ── Load stats sidebar ────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const r = await fetch(API + '/api/stats');
+    const d = await r.json();
+    document.getElementById('stat-total-val').textContent = d.total_value_fmt;
+    document.getElementById('stat-total-count').textContent = d.total_contracts;
+
+    document.getElementById('vendor-list').innerHTML = d.top_vendors.map(v => `
+      <li class="vendor-item" onclick="filterBy('vendor','${v.name.replace(/'/g,"\\'")}')">
+        <span class="v-name" title="${v.name}">${v.name}</span>
+        <span class="v-val">${v.total_fmt || v.value_fmt || ""}</span>
+      </li>`).join('');
+
+    document.getElementById('agency-list').innerHTML = d.top_agencies.map(a => `
+      <li class="vendor-item" onclick="filterBy('agency','${a.name.replace(/'/g,"\\'")}')">
+        <span class="v-name" title="${a.name}">${a.name}</span>
+        <span class="v-val">${a.total_fmt || a.value_fmt || ""}</span>
+      </li>`).join('');
+
+    document.getElementById('nav-status-text').textContent = d.total_contracts + ' CONTRACTS INDEXED';
+  } catch(e) {
+    document.getElementById('nav-status-text').textContent = 'CONNECTION ERROR';
+  }
+}
+
+// ── Load contracts ────────────────────────────────────────────────────────────
+async function loadContracts(params = '') {
+  document.getElementById('tab-contracts').innerHTML = '<div class="loading"><span class="spinner"></span>Loading...</div>';
+  try {
+    const r = await fetch(API + '/api/contracts?limit=200' + (params ? '&' + params : ''));
+    const d = await r.json();
+    allContracts = d.contracts;
+    renderTable(allContracts);
+  } catch(e) {
+    document.getElementById('tab-contracts').innerHTML = '<div class="empty"><p>Failed to load contracts</p></div>';
+  }
+}
+
+function renderTable(contracts) {
+  if (!contracts.length) {
+    document.getElementById('tab-contracts').innerHTML = '<div class="empty"><p>No contracts found</p></div>';
+    return;
+  }
+  document.getElementById('tab-contracts').innerHTML = `
+    <table class="contract-table">
+      <thead>
+        <tr>
+          <th>VENDOR</th>
+          <th>AGENCY</th>
+          <th>TITLE</th>
+          <th>VALUE</th>
+          <th>AWARDED</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${contracts.map((c,i) => `
+          <tr onclick="showContract(${i})">
+            <td>
+              <div class="td-vendor">${c.vendor || '—'}</div>
+            </td>
+            <td class="td-agency">${c.agency || '—'}</td>
+            <td class="td-title">${(c.title || '').substring(0,60)}${(c.title||'').length>60?'…':''}</td>
+            <td class="td-value">
+              <span class="badge ${valueClass(c.value||0)}">${fmtUSD(c.value||0)}</span>
+            </td>
+            <td class="td-date">${fmtDate(c.award_date)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+async function doSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) { loadContracts(); return; }
+  document.getElementById('tab-contracts').innerHTML = '<div class="loading"><span class="spinner"></span>Searching...</div>';
+  try {
+    const r = await fetch(API + '/api/search?q=' + encodeURIComponent(q));
+    const d = await r.json();
+    allContracts = d.results;
+    renderTable(allContracts);
+  } catch(e) {
+    // fallback to local filter
+    const filtered = allContracts.filter(c =>
+      JSON.stringify(c).toLowerCase().includes(q.toLowerCase())
+    );
+    renderTable(filtered);
+  }
+}
+
+function filterBy(field, val) {
+  loadContracts(field + '=' + encodeURIComponent(val));
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-contracts').style.display = tab==='contracts' ? '' : 'none';
+  document.getElementById('tab-map').style.display      = tab==='map'       ? '' : 'none';
+  currentTab = tab;
+}
+
+// ── Contract detail modal ─────────────────────────────────────────────────────
+function showContract(idx) {
+  const c = allContracts[idx];
+  if (!c) return;
+  const srcLabel = c.source === 'usaspending' ? 'USASpending.gov' : c.source === 'faceheatmap' ? 'FaceHeatmap' : (c.source || 'Unknown');
+  document.getElementById('modal-title').textContent = 'Contract Detail';
+  // Build modal fields — omit NAICS if empty
+  const dateVal = (c.award_date && c.award_date !== '—') ? fmtDate(c.award_date) : 'Not recorded';
+  const fields = [
+    ['VENDOR', c.vendor || '—'],
+    ['AGENCY', c.agency || '—'],
+    ['VALUE', fmtUSD(c.value||0), true],
+    ['AWARD DATE', dateVal],
+    ['PLACE OF PERFORMANCE', c.place || '—'],
+    ['DATA SOURCE', srcLabel],
+  ];
+  if (c.naics) fields.splice(4, 0, ['NAICS CODE', c.naics]);
+  document.getElementById('modal-grid').innerHTML = fields
+  .map(([label, val, accent]) => `
+    <div class="modal-field">
+      <div class="field-label">${label}</div>
+      <div class="field-value ${accent?'accent':''}">${val||'—'}</div>
+    </div>`).join('');
+  document.getElementById('modal-desc').innerHTML = c.description
+    ? '<strong style="font-size:.7rem;color:var(--muted);letter-spacing:1px">DESCRIPTION</strong><br><br>' + c.description
+    : '';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('open');
+  }
+}
+
+// ── AI Chat ───────────────────────────────────────────────────────────────────
+const sessionId = 'sess_' + Math.random().toString(36).slice(2);
+
+async function sendQuery() {
+  const input = document.getElementById('ai-input');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+
+  addMessage('user', q);
+  const thinkEl = addMessage('ai', '⟳ Analyzing intelligence database...');
+
+  try {
+    const r = await fetch(API + '/api/query', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ question: q, session_id: sessionId })
+    });
+    const d = await r.json();
+    thinkEl.querySelector('.msg-bubble').textContent = d.answer;
+    if (d.tokens_used) {
+      thinkEl.querySelector('.msg-label').textContent = `SENTINEL · ${d.tokens_used} tokens`;
+    }
+  } catch(e) {
+    thinkEl.querySelector('.msg-bubble').textContent = 'Connection error. Please try again.';
+  }
+}
+
+function askQuick(q) {
+  document.getElementById('ai-input').value = q;
+  sendQuery();
+}
+
+function addMessage(role, text) {
+  const msgs = document.getElementById('ai-messages');
+  const div = document.createElement('div');
+  div.className = `msg msg-${role}`;
+  div.innerHTML = `<div class="msg-bubble">${text}</div><div class="msg-label">${role==='user'?'YOU':'SENTINEL'}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────────
+document.getElementById('ai-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQuery(); }
+});
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadStats();
+loadContracts();
+</script>
+<script>
+(function(){
+  var KEY="sentinel_consent_v1", VER="2026-05-01";
+  var gate=document.getElementById("consent-gate");
+  try {
+    var s=localStorage.getItem(KEY);
+    if(s && JSON.parse(s).version===VER){ gate.style.display="none"; return; }
+  } catch(e){}
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"){ e.preventDefault();e.stopPropagation(); }},true);
+})();
+function gateCheck(){
+  var all=["g_chk1","g_chk2","g_chk3"].every(function(id){ return document.getElementById(id).checked; });
+  document.getElementById("btn-agree").classList.toggle("ready",all);
+}
+function gateAgree(){
+  try{ localStorage.setItem("sentinel_consent_v1",JSON.stringify({version:"2026-05-01",timestamp:new Date().toISOString()})); }catch(e){}
+  var g=document.getElementById("consent-gate");
+  g.classList.add("hidden");
+  setTimeout(function(){ g.style.display="none"; },400);
+}
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+
+// ── SENTINEL MAP ──────────────────────────────────────────────────────────────
+var sentinelMap = null;
+var mapMarkers = [];
+
+function fmtUSDShort(v) {
+  if (!v) return '$0';
+  v = parseFloat(v);
+  if (v >= 1e9) return '$' + (v/1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return '$' + (v/1e3).toFixed(0) + 'K';
+  return '$' + v.toLocaleString();
+}
+
+function getMarkerStyle(value) {
+  if (value >= 500e6) return { color: '#ef4444', r: 14, opacity: 0.9 };
+  if (value >= 100e6) return { color: '#f97316', r: 10, opacity: 0.85 };
+  if (value >= 10e6)  return { color: '#eab308', r: 7,  opacity: 0.8 };
+  return { color: '#60a5fa', r: 5, opacity: 0.75 };
+}
+
+function initSentinelMap() {
+  if (sentinelMap) { sentinelMap.invalidateSize(); return; }
+
+  sentinelMap = L.map('sentinel-map', {
+    center: [38.5, -96.0],
+    zoom: 4,
+    zoomControl: true,
+    attributionControl: true,
+    preferCanvas: true
+  });
+
+  // Dark tile layer — Carto Dark Matter
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO | Data: SAM.gov / USASpending.gov',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(sentinelMap);
+
+  // Load contract data for map
+  fetch(API + '/api/contracts?limit=500')
+    .then(r => r.json())
+    .then(data => {
+      var contracts = data.contracts || [];
+      var mapped = 0;
+
+      contracts.forEach(function(c) {
+        // Coords stored as [lon, lat] in MongoDB GeoJSON
+        var coords = c.coords || c.location;
+        if (!coords) return;
+        var lat, lon;
+        if (Array.isArray(coords)) { lon = coords[0]; lat = coords[1]; }
+        else if (coords.coordinates) { lon = coords.coordinates[0]; lat = coords.coordinates[1]; }
+        if (!lat || !lon || Math.abs(lat) < 0.1 || Math.abs(lon) < 0.1) return;
+
+        var style = getMarkerStyle(c.value || 0);
+        var marker = L.circleMarker([lat, lon], {
+          radius: style.r,
+          fillColor: style.color,
+          color: style.color,
+          weight: 1,
+          opacity: style.opacity,
+          fillOpacity: style.opacity * 0.7
+        });
+
+        var caps = (c.capabilities || []).map(function(cap) {
+          return '<span class="sp-cap">' + cap.replace(/_/g,' ') + '</span>';
+        }).join('');
+
+        marker.bindPopup(
+          '<div class="sp-inner">' +
+          '<div class="sp-vendor">' + (c.vendor || 'Unknown') + '</div>' +
+          '<div class="sp-agency">' + (c.agency || '') + '</div>' +
+          '<div class="sp-value">' + fmtUSDShort(c.value) + '</div>' +
+          '<div class="sp-meta">' +
+            '<span>' + (c.award_date || '') + '</span>' +
+            '<span>' + (c.place || '') + '</span>' +
+          '</div>' +
+          (caps ? '<div style="margin-top:8px">' + caps + '</div>' : '') +
+          '</div>',
+          { className: 'sentinel-popup', maxWidth: 280 }
+        );
+
+        marker.addTo(sentinelMap);
+        mapMarkers.push(marker);
+        mapped++;
+      });
+
+      var countEl = document.getElementById('map-count');
+      if (countEl) countEl.textContent = mapped + ' contracts mapped';
+    })
+    .catch(function(e) { console.error('Map load error:', e); });
+}
+
+// Patch switchTab to init map
+var _origSwitchTab = typeof switchTab === 'function' ? switchTab : null;
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('tab-contracts').style.display = tab==='contracts' ? '' : 'none';
+  document.getElementById('tab-map').style.display       = tab==='map'       ? '' : 'none';
+  currentTab = tab;
+  if (tab === 'map') {
+    setTimeout(function() { initSentinelMap(); }, 50);
+  }
+}
+
+</script>
+
+</body>
+</html>

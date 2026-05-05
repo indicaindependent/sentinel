@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SENTINEL — Surveillance Contract Intelligence</title>
+  <meta name="description" content="AI agent investigating US government facial recognition procurement. 85 contracts, 48 states, documented by Indica Independent Media."/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:      #08080f;
+      --surface: #0d1117;
+      --card:    #111827;
+      --border:  #1e293b;
+      --blue:    #3b82f6;
+      --red:     #ef4444;
+      --orange:  #f97316;
+      --amber:   #fbbf24;
+      --green:   #22c55e;
+      --white:   #f1f5f9;
+      --muted:   #64748b;
+      --mono:    'JetBrains Mono', monospace;
+      --sans:    'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: var(--sans);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.25rem;
+      height: 52px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      z-index: 1000;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      color: var(--white);
+    }
+    .logo-dot {
+      width: 10px; height: 10px;
+      background: var(--red);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--red);
+      animation: pulse-red 2s infinite;
+    }
+    @keyframes pulse-red {
+      0%,100% { box-shadow: 0 0 6px var(--red); }
+      50%      { box-shadow: 0 0 14px var(--red); }
+    }
+    .live-badge {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.4);
+      color: var(--red);
+      padding: 2px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.1em;
+    }
+    .stats-bar {
+      display: flex;
+      gap: 1.4rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+    }
+    .stat-item { display: flex; gap: 0.35rem; }
+    .stat-num  { color: var(--amber); font-weight: 700; }
+    .stat-lbl  { color: var(--muted); }
+
+    /* ── MAIN LAYOUT ── */
+    main {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── MAP PANEL ── */
+    #map-panel {
+      position: relative;
+      background: #0a0f1a;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+    .map-overlay {
+      position: absolute;
+      top: 12px; left: 12px;
+      z-index: 900;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .filter-btn {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid;
+      cursor: pointer;
+      background: rgba(8,8,15,0.85);
+      transition: all 0.2s;
+      letter-spacing: 0.05em;
+    }
+    .filter-btn.red    { color: var(--red);    border-color: var(--red); }
+    .filter-btn.orange { color: var(--orange); border-color: var(--orange); }
+    .filter-btn.green  { color: var(--green);  border-color: var(--green); }
+    .filter-btn.all    { color: var(--blue);   border-color: var(--blue); }
+    .filter-btn:hover, .filter-btn.active {
+      background: rgba(59,130,246,0.15);
+    }
+    .map-legend {
+      position: absolute;
+      bottom: 28px; left: 12px;
+      z-index: 900;
+      background: rgba(8,8,15,0.88);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+    }
+    .legend-title { color: var(--muted); margin-bottom: 7px; letter-spacing: 0.08em; }
+    .legend-row   { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+    .legend-dot   { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── CHAT PANEL ── */
+    #chat-panel {
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .chat-header {
+      padding: 0.9rem 1rem 0.7rem;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .chat-title {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--blue);
+      letter-spacing: 0.1em;
+      margin-bottom: 4px;
+    }
+    .chat-subtitle {
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .msg {
+      max-width: 92%;
+      padding: 0.65rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.83rem;
+      line-height: 1.55;
+    }
+    .msg-user {
+      align-self: flex-end;
+      background: rgba(59,130,246,0.15);
+      border: 1px solid rgba(59,130,246,0.3);
+      color: var(--white);
+    }
+    .msg-agent {
+      align-self: flex-start;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--white);
+    }
+    .msg-agent .msg-label {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: var(--blue);
+      letter-spacing: 0.1em;
+      margin-bottom: 5px;
+    }
+    .msg-agent .msg-body b { color: var(--amber); }
+    .msg-agent .msg-body em { color: var(--muted); }
+
+    .msg-thinking {
+      align-self: flex-start;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 0.6rem 0.85rem;
+      border-radius: 8px;
+    }
+    .dots { display: inline-flex; gap: 4px; }
+    .dots span {
+      width: 6px; height: 6px;
+      background: var(--blue);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%,80%,100% { transform: translateY(0); }
+      40%          { transform: translateY(-6px); }
+    }
+
+    /* ── QUICK QUERIES ── */
+    .quick-queries {
+      padding: 0.6rem 0.9rem;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .qq-btn {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      padding: 3px 9px;
+      background: rgba(59,130,246,0.08);
+      border: 1px solid rgba(59,130,246,0.25);
+      color: var(--blue);
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      letter-spacing: 0.03em;
+    }
+    .qq-btn:hover {
+      background: rgba(59,130,246,0.18);
+      border-color: var(--blue);
+    }
+
+    /* ── INPUT ── */
+    .chat-input-wrap {
+      padding: 0.75rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    #chat-input {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--white);
+      padding: 0.55rem 0.75rem;
+      border-radius: 6px;
+      font-family: var(--sans);
+      font-size: 0.83rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #chat-input:focus { border-color: var(--blue); }
+    #chat-input::placeholder { color: var(--muted); }
+    #send-btn {
+      background: var(--blue);
+      color: white;
+      border: none;
+      padding: 0.55rem 1rem;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.2s;
+    }
+    #send-btn:hover   { background: #2563eb; }
+    #send-btn:disabled { background: var(--border); cursor: not-allowed; }
+
+    /* ── CONTRACT POPUP OVERRIDE ── */
+    .leaflet-popup-content-wrapper {
+      background: var(--card) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--white) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+    }
+    .leaflet-popup-tip { background: var(--card) !important; }
+    .popup-agency { font-family: var(--mono); font-size: 0.78rem; color: var(--amber); font-weight: 700; margin-bottom: 4px; }
+    .popup-vendor { font-size: 0.8rem; color: var(--white); margin-bottom: 3px; }
+    .popup-value  { font-family: var(--mono); font-size: 0.72rem; }
+    .popup-tier   { display: inline-block; font-family: var(--mono); font-size: 0.62rem; padding: 1px 7px; border-radius: 3px; margin-top: 5px; }
+    .tier-VERIFIED    { background: rgba(34,197,94,0.2);  color: #22c55e; }
+    .tier-PROBABLE    { background: rgba(59,130,246,0.2); color: #3b82f6; }
+    .tier-REPORTED    { background: rgba(251,191,36,0.2); color: #fbbf24; }
+    .tier-UNCONFIRMED { background: rgba(100,116,139,0.2);color: #94a3b8; }
+    .popup-src { font-size: 0.68rem; color: var(--muted); margin-top: 6px; }
+    .popup-src a { color: var(--blue); text-decoration: none; }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      main { grid-template-columns: 1fr; grid-template-rows: 45vh 1fr; }
+      .stats-bar { display: none; }
+      #chat-panel { border-left: none; border-top: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    SENTINEL
+    <span class="live-badge">LIVE</span>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-item"><span class="stat-num">85</span><span class="stat-lbl">contracts</span></div>
+    <div class="stat-item"><span class="stat-num">48</span><span class="stat-lbl">states</span></div>
+    <div class="stat-item"><span class="stat-num">29</span><span class="stat-lbl">FBI DMV agreements</span></div>
+    <div class="stat-item"><span class="stat-num">$9.2M+</span><span class="stat-lbl">documented</span></div>
+    <div class="stat-item"><span class="stat-num" style="color:var(--red)">94%</span><span class="stat-lbl">values hidden</span></div>
+  </div>
+  <div style="font-size:0.7rem;color:var(--muted);font-family:var(--mono)">
+    Indica Independent Media · faceheatmap.app
+  </div>
+</header>
+
+<!-- MAIN -->
+<main>
+  <!-- MAP -->
+  <div id="map-panel">
+    <div id="map"></div>
+    <div class="map-overlay">
+      <button class="filter-btn all active"   onclick="filterMap('all')">ALL</button>
+      <button class="filter-btn red"           onclick="filterMap('RED')">RED RISK</button>
+      <button class="filter-btn orange"        onclick="filterMap('ORANGE')">ORANGE</button>
+      <button class="filter-btn green"         onclick="filterMap('GREEN')">BANS</button>
+    </div>
+    <div class="map-legend">
+      <div class="legend-title">RISK LEVEL</div>
+      <div class="legend-row"><div class="legend-dot" style="background:#ef4444"></div><span>HIGH RISK (RED)</span></div>
+      <div class="legend-row"><div class="legend-dot" style="background:#f97316"></div><span>MODERATE (ORANGE)</span></div>
+      <div class="legend-row"><div class="legend-dot" style="background:#eab308"></div><span>LOW (YELLOW)</span></div>
+      <div class="legend-row"><div class="legend-dot" style="background:#22c55e"></div><span>BAN/ORDINANCE</span></div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div id="chat-panel">
+    <div class="chat-header">
+      <div class="chat-title">▸ ASK SENTINEL</div>
+      <div class="chat-subtitle">AI-powered surveillance contract investigator</div>
+    </div>
+
+    <div id="messages">
+      <div class="msg msg-agent">
+        <div class="msg-label">SENTINEL</div>
+        <div class="msg-body">
+          I'm <b>SENTINEL</b> — I investigate government facial recognition procurement.<br><br>
+          I have <b>85 documented contracts</b> across 48 states in my database.
+          Ask me anything: which vendors are active in your state, how much was spent,
+          or which agencies are deploying surveillance technology.<br><br>
+          <em>Every answer is backed by primary source documents.</em>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-queries">
+      <button class="qq-btn" onclick="sendQuick('Which vendor has the most contracts?')">Top vendor?</button>
+      <button class="qq-btn" onclick="sendQuick('Show me all Clearview AI federal contracts')">Clearview federal</button>
+      <button class="qq-btn" onclick="sendQuick('What is the FBI facial recognition network?')">FBI network</button>
+      <button class="qq-btn" onclick="sendQuick('Do any ban states still have active surveillance?')">Ban loophole</button>
+      <button class="qq-btn" onclick="sendQuick('What contracts exist in California?')">California</button>
+      <button class="qq-btn" onclick="sendQuick('Give me an overview of the full database')">Overview</button>
+    </div>
+
+    <div class="chat-input-wrap">
+      <input id="chat-input" type="text" placeholder="Ask about any agency, vendor, or state..."
+             onkeydown="if(event.key==='Enter')sendMessage()"/>
+      <button id="send-btn" onclick="sendMessage()">SEND</button>
+    </div>
+  </div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ─── Map Setup ────────────────────────────────────────────────────────────────
+const map = L.map('map', {
+  center: [38.5, -96],
+  zoom: 4,
+  zoomControl: true,
+  attributionControl: false,
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  subdomains: 'abcd', maxZoom: 19
+}).addTo(map);
+
+const RISK_COLORS = { RED: '#ef4444', ORANGE: '#f97316', YELLOW: '#eab308', GREEN: '#22c55e' };
+const TIER_SIZES  = { VERIFIED: 11, PROBABLE: 8, REPORTED: 7, UNCONFIRMED: 5 };
+
+let allMarkers = [];
+let contractsData = [];
+
+function makeMarker(c) {
+  if (!c.coordinates || !c.coordinates.lat) return null;
+  const color   = RISK_COLORS[c.risk_level] || '#6b7280';
+  const radius  = TIER_SIZES[c.confidence_tier] || 7;
+  const marker = L.circleMarker(
+    [c.coordinates.lat, c.coordinates.lng],
+    { radius, color: '#fff', weight: 1, fillColor: color, fillOpacity: 0.85 }
+  );
+  const val = c.contract_value_usd
+    ? `$${c.contract_value_usd.toLocaleString()}`
+    : '<em style="color:#64748b">Value undisclosed</em>';
+  const srcLink = c.source_url
+    ? `<a href="${c.source_url}" target="_blank" rel="noopener">View source →</a>`
+    : c.source || 'Source on file';
+  marker.bindPopup(`
+    <div class="popup-agency">${c.agency_name}</div>
+    <div class="popup-vendor">🔍 ${c.vendor_name}</div>
+    <div class="popup-value">${val}</div>
+    <span class="popup-tier tier-${c.confidence_tier}">${c.confidence_tier}</span>
+    <div class="popup-src">${srcLink}</div>
+  `, { maxWidth: 260 });
+  marker._riskLevel = c.risk_level;
+  return marker;
+}
+
+function filterMap(level) {
+  allMarkers.forEach(m => {
+    if (level === 'all' || m._riskLevel === level) m.addTo(map);
+    else map.removeLayer(m);
+  });
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.trim() === level.toUpperCase()
+      || (level === 'all' && b.textContent.trim() === 'ALL'));
+  });
+}
+
+// Load contracts data from API
+async function loadContracts() {
+  try {
+    const res = await fetch('/api/contracts');
+    if (!res.ok) return loadFallbackContracts();
+    contractsData = await res.json();
+    contractsData.forEach(c => {
+      const m = makeMarker(c);
+      if (m) { m.addTo(map); allMarkers.push(m); }
+    });
+  } catch(e) { loadFallbackContracts(); }
+}
+
+function loadFallbackContracts() {
+  // Minimal set of key contracts for offline/fallback demo
+  const fallback = [
+    { agency_name:'ICE / DHS', vendor_name:'Clearview AI', risk_level:'RED', confidence_tier:'VERIFIED', contract_value_usd:9200000, coordinates:{lat:38.9072,lng:-77.0369}, source_url:'https://www.usaspending.gov/search/?hash=c5b29f1c' },
+    { agency_name:'NYPD', vendor_name:'Clearview AI', risk_level:'RED', confidence_tier:'REPORTED', contract_value_usd:null, coordinates:{lat:40.7128,lng:-74.006}, source_url:'' },
+    { agency_name:'Chicago Police Dept', vendor_name:'Clearview AI', risk_level:'RED', confidence_tier:'REPORTED', contract_value_usd:null, coordinates:{lat:41.8781,lng:-87.6298}, source_url:'' },
+    { agency_name:'Los Angeles (LACRIS)', vendor_name:'LACRIS', risk_level:'RED', confidence_tier:'VERIFIED', contract_value_usd:null, coordinates:{lat:34.0522,lng:-118.2437}, source_url:'' },
+    { agency_name:'Dallas Police Dept', vendor_name:'Clearview AI', risk_level:'RED', confidence_tier:'PROBABLE', contract_value_usd:null, coordinates:{lat:32.7767,lng:-96.797}, source_url:'' },
+    { agency_name:'San Francisco (BANNED)', vendor_name:'BANNED', risk_level:'GREEN', confidence_tier:'VERIFIED', contract_value_usd:null, coordinates:{lat:37.7749,lng:-122.4194}, source_url:'' },
+    { agency_name:'Detroit Police Dept', vendor_name:'Idemia', risk_level:'ORANGE', confidence_tier:'REPORTED', contract_value_usd:null, coordinates:{lat:42.3314,lng:-83.0458}, source_url:'' },
+    { agency_name:'Alaska DPS', vendor_name:'Clearview AI', risk_level:'ORANGE', confidence_tier:'REPORTED', contract_value_usd:110000, coordinates:{lat:64.2008,lng:-153.4937}, source_url:'' },
+  ];
+  fallback.forEach(c => {
+    const m = makeMarker(c);
+    if (m) { m.addTo(map); allMarkers.push(m); }
+  });
+}
+
+loadContracts();
+
+// ─── Chat Interface ───────────────────────────────────────────────────────────
+const messagesEl = document.getElementById('messages');
+const inputEl    = document.getElementById('chat-input');
+const sendBtn    = document.getElementById('send-btn');
+let sessionId    = 'session_' + Date.now();
+let isThinking   = false;
+
+function appendMsg(role, html) {
+  const div = document.createElement('div');
+  div.className = `msg msg-${role}`;
+  if (role === 'agent') {
+    div.innerHTML = `<div class="msg-label">SENTINEL</div><div class="msg-body">${html}</div>`;
+  } else {
+    div.innerHTML = html;
+  }
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return div;
+}
+
+function showThinking() {
+  const div = document.createElement('div');
+  div.className = 'msg-thinking';
+  div.id = 'thinking';
+  div.innerHTML = '<div class="dots"><span></span><span></span><span></span></div>';
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+function removeThinking() {
+  const t = document.getElementById('thinking');
+  if (t) t.remove();
+}
+
+function formatAgentText(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`(.*?)`/g, `<code style="font-family:var(--mono);font-size:0.78em;background:rgba(59,130,246,0.12);padding:1px 5px;border-radius:3px;color:var(--blue)">$1</code>`)
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if (!text || isThinking) return;
+  inputEl.value = '';
+  isThinking = true;
+  sendBtn.disabled = true;
+
+  appendMsg('user', text);
+  showThinking();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, session_id: sessionId }),
+    });
+    removeThinking();
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    appendMsg('agent', formatAgentText(data.response || 'No response received.'));
+  } catch(e) {
+    removeThinking();
+    appendMsg('agent', `<em style="color:var(--red)">Error: ${e.message}. Please try again.</em>`);
+  } finally {
+    isThinking = false;
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
+}
+
+function sendQuick(q) {
+  inputEl.value = q;
+  sendMessage();
+}
+</script>
+</body>
+</html>

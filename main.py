@@ -78,26 +78,43 @@ def fmt_usd(v):
 
 def fmt_date(d):
     if not d: return "—"
+    s = str(d).strip()
+    if s in ("—", "-", "null", "None", ""): return "—"
     try:
         if isinstance(d, datetime): return d.strftime("%Y-%m-%d")
-        return str(d)[:10]
-    except: return str(d)
+        # Try to parse ISO date strings
+        from datetime import datetime as dt
+        parsed = dt.fromisoformat(s.replace("Z",""))
+        return parsed.strftime("%b %d, %Y")
+    except:
+        return s[:10] if len(s) >= 10 else s
 
 def normalize(c):
     loc = c.get("location") or {}
+    # Build place string safely — filter out None/empty/literal "None"
+    city  = c.get("city") or ""
+    state = c.get("state") or c.get("state_resolved") or ""
+    city  = "" if str(city).strip().lower() in ("none", "null", "") else str(city).strip()
+    state = "" if str(state).strip().lower() in ("none", "null", "") else str(state).strip()
+    place_parts = [p for p in [city, state] if p]
+    place = ", ".join(place_parts) if place_parts else ""
+    # Fix award_date — stored as "—" string in some docs
+    raw_date = c.get("award_date") or c.get("contract_date") or ""
+    if str(raw_date).strip() in ("—", "-", "null", "None", ""):
+        raw_date = None
     return {
         "id":           str(c.get("_id", "")),
-        "vendor":       c.get("vendor_name", "Unknown"),
-        "agency":       c.get("agency_name", ""),
+        "vendor":       c.get("vendor_name") or "Unknown",
+        "agency":       c.get("agency_name") or "",
         "value":        float(c.get("contract_value", 0) or 0),
-        "award_date":   fmt_date(c.get("award_date") or c.get("contract_date")),
-        "naics":        c.get("naics_code", ""),
-        "place":        f"{c.get('city','')}, {c.get('state','')}".strip(", "),
-        "description":  c.get("description", ""),
-        "capabilities": c.get("capabilities", []),
-        "source":       c.get("source", ""),
+        "award_date":   fmt_date(raw_date),
+        "naics":        c.get("naics_code") or "",
+        "place":        place,
+        "description":  c.get("description") or "",
+        "capabilities": c.get("capabilities") or [],
+        "source":       c.get("source") or "",
         "coords":       loc.get("coordinates") if loc else None,
-        "state_resolved": c.get("state_resolved", ""),
+        "state_resolved": state or c.get("state_resolved") or "",
     }
 
 # ── Pages ─────────────────────────────────────────────────────────────────────

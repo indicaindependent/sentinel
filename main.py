@@ -1,6 +1,6 @@
 """
 SENTINEL — Surveillance Contract Intelligence Agent
-Google Cloud Rapid Agent Hackathon 2026 | MongoDB Track
+Google Cloud Rapid Agent Hackathon 2026 | GitLab Track
 Stack: FastAPI + Google ADK 1.32 + Gemini 2.5 Pro + MongoDB MCP
 Live: sentinel.osintnet.uk
 """
@@ -12,6 +12,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import motor.motor_asyncio
 from contextlib import asynccontextmanager
@@ -23,6 +24,28 @@ if GEMINI_API_KEY:
     os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
 
 MONGO_URI = os.environ.get("MONGO_URI", "")
+
+# ── Arize Phoenix Tracing (OpenInference + OpenTelemetry) ─────────────────────
+PHOENIX_API_KEY = os.environ.get("PHOENIX_API_KEY", "")
+PHOENIX_ENDPOINT = os.environ.get("PHOENIX_COLLECTOR_ENDPOINT", "https://app.phoenix.arize.com/v1/traces")
+PHOENIX_PROJECT  = os.environ.get("PHOENIX_PROJECT_NAME", "sentinel-surveillance")
+
+if PHOENIX_API_KEY:
+    try:
+        from phoenix.otel import register
+        tracer_provider = register(
+            project_name=PHOENIX_PROJECT,
+            endpoint=PHOENIX_ENDPOINT,
+            headers={"api_key": PHOENIX_API_KEY},
+            auto_instrument=True,  # auto-instruments Google ADK + Gemini
+        )
+        print(f"✓ Arize Phoenix tracing active → project: {PHOENIX_PROJECT}")
+    except Exception as _phx_err:
+        print(f"⚠ Phoenix tracing init failed: {_phx_err}")
+else:
+    print("⚠ PHOENIX_API_KEY not set — tracing disabled")
+
+
 
 # ── DB client ─────────────────────────────────────────────────────────────────
 db_client = None
@@ -38,6 +61,7 @@ async def lifespan(app: FastAPI):
     db_client.close()
 
 app = FastAPI(title="SENTINEL API", lifespan=lifespan)
+app.mount("/static", StaticFiles(directory="/home/ptsdpete/sentinel/static"), name="static")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 # ── ADK runner (lazy init) ────────────────────────────────────────────────────
@@ -118,6 +142,11 @@ def normalize(c):
     }
 
 # ── Pages ─────────────────────────────────────────────────────────────────────
+
+@app.get("/sw.js")
+async def service_worker():
+    from fastapi.responses import FileResponse
+    return FileResponse("/home/ptsdpete/sentinel/static/sw.js", media_type="application/javascript")
 @app.get("/", response_class=HTMLResponse)
 async def index():
     p = os.path.join(os.path.dirname(__file__), "index.html")
@@ -293,6 +322,6 @@ async def health():
         "contracts": count,
         "ai_engine": "Gemini 2.5 Pro + Google ADK 1.32",
         "mcp":       "MongoDB MCP Server (mongodb-mcp-server)",
-        "track":     "MongoDB — Google Cloud Rapid Agent Hackathon 2026",
+        "track": "GitLab Track — Google Cloud Rapid Agent Hackathon 2026",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }

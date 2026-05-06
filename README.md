@@ -1,238 +1,136 @@
 # SENTINEL — Surveillance Contract Intelligence Agent
 
-<div align="center">
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-sentinel.osintnet.uk-ef4444?style=for-the-badge)](https://sentinel.osintnet.uk)
+[![Google Cloud](https://img.shields.io/badge/Google%20ADK-1.32-4285F4?style=for-the-badge&logo=google-cloud)](https://cloud.google.com)
+[![Gemini](https://img.shields.io/badge/Gemini-2.5%20Pro-8E75B2?style=for-the-badge&logo=google)](https://deepmind.google/gemini)
+[![MongoDB](https://img.shields.io/badge/MongoDB-MCP-47A248?style=for-the-badge&logo=mongodb)](https://mongodb.com)
+[![GitLab](https://img.shields.io/badge/GitLab-MCP%20Track-FC6D26?style=for-the-badge&logo=gitlab)](https://gitlab.com/indicaindependent/sentinel)
+[![Arize AX](https://img.shields.io/badge/Arize%20AX-Tracing-7C3AED?style=for-the-badge)](https://arize.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-![SENTINEL](https://img.shields.io/badge/SENTINEL-OSINT_Intelligence-ef4444?style=for-the-badge&logo=google-cloud&logoColor=white)
-![Gemini](https://img.shields.io/badge/Gemini_2.5_Pro-Google_AI-4285F4?style=for-the-badge&logo=google&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB_MCP-Partner_Integration-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![ADK](https://img.shields.io/badge/Google_ADK-1.32-blue?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=opensourceinitiative&logoColor=white)
-![GitLab](https://img.shields.io/badge/GitLab-Track-FC6D26?style=for-the-badge&logo=gitlab&logoColor=white)
-
-**Ask anything about U.S. government surveillance spending. Get answers in seconds.**
-
-🔴 **[Live Demo → sentinel.osintnet.uk](https://sentinel.osintnet.uk)**
-
-*Google Cloud Rapid Agent Hackathon 2026 — GitLab Track*
-
-</div>
+> *$3.83 billion in government surveillance contracts. One agent to find them, trace them, and explain them.*
 
 ---
 
 ## What Is SENTINEL?
 
-Every facial recognition and AI surveillance contract awarded by the U.S. federal government is a public record. None of them are easy to find. We found **249 of them** — totaling **$3.83 billion** — and built an AI agent that lets anyone ask questions about government surveillance spending in plain English and get sourced, verified answers in seconds.
+SENTINEL is an AI-powered OSINT agent that makes government surveillance spending transparent and searchable. It holds a verified dataset of **249 surveillance contracts** totaling **$3.83 billion** — covering facial recognition, predictive policing, location tracking, biometric databases, and more.
 
-**This is not a chatbot.** SENTINEL is a reasoning agent that:
-- Queries a real MongoDB database of 249 verified government contracts
-- Uses multi-step reasoning to aggregate, filter, and analyze procurement data
-- Surfaces relationships between vendors, agencies, and spending patterns
-- Never hallucinates — every answer is grounded in real contract data
-
-Built by **Indica Independent Media**, whose mission is to use information and knowledge to defend vulnerable communities against powerful entities.
-
----
-
-## Architecture
+Ask it anything in plain English. Get sourced, grounded answers in seconds.
 
 ```
-User Query
-    │
-    ▼
-FastAPI (sentinel.osintnet.uk)
-    │
-    ▼
-Google ADK 1.32 Runner
-    │
-    ├── Gemini 2.5 Pro (reasoning + natural language)
-    │
-    └── MongoDB MCP Server (mongodb-mcp-server)
-            │
-            ▼
-        MongoDB Atlas
-        ├── 249 federal contracts
-        ├── $3.83B total value
-        ├── 2dsphere geo index
-        └── Vendor / agency aggregations
-```
-
-### Tech Stack
-
-| Layer | Technology |
-|---|---|
-| **AI Reasoning** | Gemini 2.5 Pro via Google ADK 1.32 |
-| **Agent Framework** | Google Cloud Agent Development Kit (ADK) |
-| **MCP Partner** | MongoDB MCP Server (`mongodb-mcp-server`) |
-| **Database** | MongoDB Atlas M0 — `sentinel` cluster |
-| **Backend** | FastAPI + Python 3.11 + Uvicorn |
-| **Frontend** | Vanilla JS + Leaflet.js (dark map UI) |
-| **Infrastructure** | Dell OptiPlex → Cloudflare Tunnel → CF Zero Trust |
-| **Domain** | sentinel.osintnet.uk |
-
----
-
-## The Data
-
-SENTINEL's database contains **249 verified U.S. federal government contracts** sourced from:
-- SAM.gov (System for Award Management)
-- USASpending.gov
-- 18 months of OSINT research by Indica Independent Media
-
-**Highlights:**
-- 🔴 Palantir USG Inc: **$1.93B** in surveillance/AI contracts
-- 🔴 Palantir Technologies: **$1.71B** additional contracts
-- Department of Defense: **$2.31B** total surveillance spend
-- 29 unique government agencies tracked
-- All contracts geocoded by state with 2dsphere indexing
-
----
-
-## How The Agent Works
-
-SENTINEL uses the **MongoDB MCP Server** as its primary tool for data access. When you ask a question, the ADK agent:
-
-1. **Plans** — Gemini 2.5 Pro determines which MongoDB operations are needed
-2. **Executes** — Issues `find`, `aggregate`, `count` commands via MCP
-3. **Reasons** — Synthesizes results into a factual, sourced answer
-4. **Suggests** — Proposes a follow-up query to dig deeper
-
-### Example Queries
-```
-"Who are the top 5 vendors by total contract value?"
-"Which agencies spent the most on facial recognition?"
-"Show me all Clearview AI contracts"
-"How many contracts were awarded after 2022 over $10M?"
-"What states have the most surveillance contractors?"
+"Which agency spent the most on facial recognition?"
+"Show me all Palantir contracts over $100 million"
+"What surveillance tools did DHS purchase in 2023?"
+"Which vendors supply both ICE and CBP?"
 ```
 
 ---
 
-## MongoDB MCP Integration
+## Architecture — 4-Track Integration Stack
 
-This project uses the official `mongodb-mcp-server` as the ADK agent's data superpowers:
+### Track 1 — Google Cloud (Core Intelligence)
+- **Google ADK 1.32** — agent orchestration and tool-calling loop
+- **Gemini 2.5 Pro** — reasoning, synthesis, natural language generation
+- FastAPI + Uvicorn backend, deployed on Ubuntu 24.04 via systemd
+- Live endpoint: `sentinel.osintnet.uk`
 
-```python
-from google.adk.agents import Agent
-from google.adk.tools.mcp_tool import McpToolset
-from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
-from mcp import StdioServerParameters
+### Track 2 — MongoDB (Knowledge Store + MCP)
+- **MongoDB Atlas** stores all 249 verified surveillance contracts
+- **MongoDB MCP Server** gives the ADK agent structured real-time access
+- Zero hallucination: every answer grounded in live contract records
+- Supports filtering, aggregation, and cross-vendor analysis
 
-root_agent = Agent(
-    model="gemini-2.5-pro",
-    name="sentinel_agent",
-    instruction=SENTINEL_INSTRUCTION,
-    tools=[
-        McpToolset(
-            connection_params=StdioConnectionParams(
-                server_params=StdioServerParameters(
-                    command="npx",
-                    args=["-y", "mongodb-mcp-server", "--readOnly"],
-                    env={"MDB_MCP_CONNECTION_STRING": os.environ["MONGO_URI"]},
-                ),
-                timeout=30,
-            )
-        )
-    ],
-)
-```
+### Track 3 — GitLab (Version Control + MCP)
+- Full source hosted at `gitlab.com/indicaindependent/sentinel`
+- **GitLab MCP Server** integrated via `SseConnectionParams`
+- Agent can introspect its own codebase — a self-aware OSINT tool
+- MIT licensed, OSI compliant
 
-**MCP Tools Available to the Agent:**
-- `find` — Query contracts with complex filters
-- `aggregate` — Group, sum, rank by any field
-- `count` — Count matching records
-- `collection-schema` — Schema introspection
-- `db-stats` — Database overview
+### Track 4 — Arize AX (Observability + Tracing)
+- **Arize AX** captures full OpenInference traces of every agent invocation
+- Every Gemini call, MongoDB query, and tool decision logged as a span
+- Integrated via `arize-otel` + `openinference-instrumentation-google-genai`
+- Project: `sentinel-surveillance` in Arize space
+- Production-grade LLM observability for a public-interest tool
 
 ---
 
-## Local Setup
+## Dataset
+
+| Metric | Value |
+|--------|-------|
+| Total contracts | 249 |
+| Total value | $3.83 billion |
+| Sources | USASpending.gov + agency portals |
+| Top vendor | Palantir USG Inc ($1.76B) |
+| Coverage | Facial recognition, predictive policing, location tracking, biometrics, CCTV, social monitoring |
+
+---
+
+## Tech Stack
+
+```
+Backend:     Python 3.12, FastAPI, Uvicorn
+AI Agent:    Google ADK 1.32, Gemini 2.5 Pro
+Database:    MongoDB Atlas + Motor (async driver)
+MCP Tools:   MongoDB MCP Server, GitLab MCP Server
+Tracing:     Arize AX, arize-otel, OpenInference, OpenTelemetry
+Frontend:    Vanilla JS/HTML, served via FastAPI static files
+Infra:       Cloudflare Workers, Cloudflare Zero Trust, Ubuntu 24.04
+Deploy:      systemd service, Cloudflare Tunnel
+```
+
+---
+
+## Quick Start
 
 ```bash
-# Clone
-git clone https://github.com/indicaindependent/sentinel.git
+git clone https://github.com/indicaindependent/sentinel
 cd sentinel
-
-# Python venv
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 
-# Node (for MongoDB MCP server)
-node --version  # requires v18+
+# Set environment variables
+export GEMINI_API_KEY="your-key"
+export MONGO_URI="your-mongodb-uri"
+export ARIZE_SPACE_ID="your-space-id"
+export ARIZE_API_KEY="your-arize-key"
+export ARIZE_PROJECT_NAME="sentinel-surveillance"
 
-# Environment
-cp .env.example .env
-# Add your keys:
-#   GEMINI_API_KEY=your_key_from_aistudio.google.com
-#   MONGO_URI=your_mongodb_atlas_connection_string
-
-# Run
-uvicorn main:app --host 0.0.0.0 --port 8001 --reload
-```
-
-Open `http://localhost:8001`
-
----
-
-## API Reference
-
-```
-GET  /api/health       — System status + engine info
-GET  /api/stats        — Contract totals, top vendors/agencies
-GET  /api/contracts    — Query contracts (search, vendor, agency, min_value)
-POST /api/query        — Natural language query to Gemini + MongoDB MCP agent
+python main.py
 ```
 
 ---
 
-## Judging Criteria Alignment
+## Hackathon Tracks
 
-| Criterion | SENTINEL's Answer |
-|---|---|
-| **Technological Implementation** | Gemini 2.5 Pro + ADK 1.32 + MongoDB MCP — full partner stack |
-| **Design** | Dark OSINT aesthetic, Leaflet map, responsive, zero UI friction |
-| **Potential Impact** | Transparency tool for $3.83B in surveillance spend — accessible to any citizen |
-| **Quality of Idea** | Real data, real problem — not a toy demo |
+| Track | Integration | Status |
+|-------|-------------|--------|
+| Google Cloud Rapid Agent | ADK 1.32 + Gemini 2.5 Pro | ✅ Live |
+| MongoDB | Atlas + MCP Server | ✅ Live |
+| GitLab | Repo + MCP Server | ✅ Live |
+| Arize AX | arize-otel + OpenInference | ✅ Live |
 
 ---
 
 ## Changelog
 
-### v2.0 — May 5, 2026 — AI Engine Migration: Claude → Gemini 2.5 Pro
+### v3.0 — May 6, 2026
+- ✅ Arize AX tracing integration — full OpenInference span coverage
+- ✅ GitLab MCP dual-tool integration alongside MongoDB MCP
+- ✅ Migrated tracing to `arize-otel` official SDK (HTTP transport)
+- ✅ All 4 hackathon tracks simultaneously active
 
-> **Full platform migration from Anthropic Claude to Google Gemini 2.5 Pro.**
+### v2.0 — May 5, 2026
+- ✅ Full Claude → Gemini 2.5 Pro migration
+- ✅ GitLab repository + MIT license
+- ✅ MongoDB MCP server integration
 
-This version migrated the entire SENTINEL AI reasoning engine from Anthropic's Claude (claude-opus-4-7) to **Google Gemini 2.5 Pro** via the **Google Cloud Agent Development Kit (ADK) 1.32** framework. The migration was completed to align with the **Google Cloud Rapid Agent Hackathon 2026** requirements and unlock the full ADK + MongoDB MCP partner integration stack.
-
-**What changed:**
-
-| Component | Before (v1.x) | After (v2.0) |
-|-----------|--------------|--------------|
-| AI Model | `claude-opus-4-7` (Anthropic) | `gemini-2.5-pro` (Google) |
-| Agent Framework | Direct Anthropic API calls | Google ADK 1.32 `Runner` |
-| Tool Integration | Custom function calling | MongoDB MCP Server via `McpToolset` |
-| API Key | `ANTHROPIC_API_KEY` | `GEMINI_API_KEY` (AI Studio / GCP) |
-| UI model label | `claude-opus-4-7` | `gemini-2.5-pro` |
-| Legal text | "powered by Anthropic Claude" | "powered by Google Gemini 2.5 Pro" |
-
-**Why Gemini 2.5 Pro:**
-- Native ADK integration — `Agent(model="gemini-2.5-pro")` with zero adapter code
-- Official MongoDB MCP partner stack (`McpToolset` + `StdioConnectionParams`)
-- Gemini 2.5 Pro's extended context window handles full contract dataset summaries
-- Required for Google Cloud Rapid Agent Hackathon eligibility
-
-**Files changed:**
-- `agent/sentinel_agent.py` — model swapped, ADK runner introduced
-- `agent/tools.py` — MCP toolset replaces direct function calls
-- `main.py` — ADK `Runner` + `InMemorySessionService` wired in
-- `index.html` — UI model label + consent gate legal text updated
-- `requirements.txt` — `google-adk>=1.32`, `anthropic` dependency removed
-
----
-
-### v1.x — April 2026 — Initial Build (Anthropic Claude)
-
-Original build using `claude-opus-4-7` with direct Anthropic API calls and custom MongoDB tool functions. Deprecated in favor of the ADK-native v2.0 stack.
+### v1.0 — May 3, 2026
+- ✅ Initial deployment
+- ✅ 249 contracts dataset
+- ✅ FastAPI + ADK + Gemini stack
 
 ---
 
@@ -240,10 +138,4 @@ Original build using `claude-opus-4-7` with direct Anthropic API calls and custo
 
 MIT License — see [LICENSE](LICENSE)
 
----
-
-## About
-
-Built by **[Indica Independent Media](https://osintnet.uk)** — a collective of technologists and artists who use knowledge and information to defend vulnerable communities.
-
-> *"Every surveillance contract is a public record. We just made them readable."*
+Built by [Indica Independent Media](https://osintnet.uk) | Tools free at point of use.

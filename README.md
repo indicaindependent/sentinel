@@ -6,12 +6,14 @@
 ![Gemini](https://img.shields.io/badge/Gemini_2.5_Pro-Google_AI-4285F4?style=for-the-badge&logo=google&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB_MCP-Partner_Integration-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 ![ADK](https://img.shields.io/badge/Google_ADK-1.32-blue?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=opensourceinitiative&logoColor=white)
+![GitLab](https://img.shields.io/badge/GitLab-Track-FC6D26?style=for-the-badge&logo=gitlab&logoColor=white)
 
 **Ask anything about U.S. government surveillance spending. Get answers in seconds.**
 
 🔴 **[Live Demo → sentinel.osintnet.uk](https://sentinel.osintnet.uk)**
 
-*Google Cloud Rapid Agent Hackathon 2026 — MongoDB Track*
+*Google Cloud Rapid Agent Hackathon 2026 — GitLab Track*
 
 </div>
 

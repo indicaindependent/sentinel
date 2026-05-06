@@ -1,0 +1,4 @@
+# Force GitHub Linguist language detection
+*.py linguist-language=Python linguist-detectable=true
+*.html linguist-language=HTML linguist-detectable=true
+Dockerfile linguist-detectable=true

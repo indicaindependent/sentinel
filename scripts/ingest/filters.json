@@ -1,0 +1,46 @@
+{
+  "psc_codes": {
+    "5810":"Comms Security Equipment","5811":"Other Comms Security","5815":"Teletype/Fax",
+    "5820":"Radio TV Comms","5825":"Radio Nav","5826":"Radio Nav Airborne","5830":"Intercom",
+    "5836":"Video Recording","5840":"Radar Non-airborne","5841":"Radar Airborne",
+    "5860":"Coherent Radiation","5865":"Electronic Countermeasures","5895":"Misc Comms",
+    "6710":"Cameras Motion","6720":"Cameras Still","6730":"Photo Projection","6760":"Photo Equip",
+    "D301":"IT Facility Ops","D302":"IT Systems Dev","D304":"IT Telecom Transmission",
+    "D305":"IT Teleprocessing","D307":"IT Strategy","D310":"IT Cybersecurity",
+    "D316":"IT Network Mgmt","D318":"IT Integrated Solutions","DA01":"IT Business Apps",
+    "DA10":"Other IT","DE01":"IT Data Centers","DJ01":"IT Outsourcing",
+    "7A20":"App Dev Software","7A21":"DB Mgmt Software","7B20":"App Dev SaaS","7B21":"DB SaaS",
+    "R425":"Engineering Services","R408":"Program Mgmt","R499":"Other Pro Services",
+    "AC15":"R&D Defense Electronics","AC25":"R&D Defense Electronics Adv","AD15":"R&D Defense Other Electronics",
+    "1240":"Optical Sighting","1287":"Fire Control Sensors","1290":"Misc Fire Control"
+  },
+  "naics_codes": {
+    "517311":"Wired Telecom","517410":"Satellite Telecom","541330":"Engineering",
+    "541511":"Custom Programming","541512":"Computer Systems Design","541513":"Computer Facilities Mgmt",
+    "541519":"Other Computer Services","541611":"Admin Mgmt Consulting","541614":"Logistics Consulting",
+    "541618":"Other Mgmt Consulting","541690":"Other Sci/Tech Consulting","541713":"R&D Nanotech",
+    "541714":"R&D Biotech","541715":"R&D Physical Sciences","561611":"Investigation Services",
+    "561612":"Security Guards","561621":"Security Systems","334111":"Electronic Computer Mfg",
+    "334118":"Computer Peripheral Mfg","334210":"Telephone Apparatus","334220":"Wireless Comms",
+    "334290":"Other Comms Equip","334310":"Audio Video Equip","334413":"Semiconductor",
+    "334419":"Other Electronic Component","334511":"Search/Detect/Nav Instruments",
+    "423430":"Computer Wholesalers","513210":"Software Publishers","518210":"Data Processing/Hosting"
+  },
+  "keywords": [
+    "surveillance","biometric","facial recognition","face recognition",
+    "license plate","lpr","alpr","predictive polic","predictive analytics",
+    "social media monitor","social media intel","wiretap","pen register","trap and trace",
+    "signals intelligence","sigint","comint","humint","osint",
+    "cell site","stingray","cell-site simulator","imsi",
+    "cell phone forensic","mobile forensic","phone unlock","data extraction","digital forensic",
+    "fusion center","real-time crime","crime center",
+    "body worn camera","body camera","bwc","gunshot detection","shotspotter","soundthinking",
+    "drone detect","counter-uas","counter uas","cuas",
+    "border surveillance","border patrol","persistent surveillance","mass surveillance","bulk collection",
+    "data fusion","all-source analy","maven smart system","gotham","foundry",
+    "pegasus","predator spyware","graykey","cellebrite","ufed","physical analyzer",
+    "voice biometric","speaker recognition","iris recognition","fingerprint",
+    "persistent ground surveillance","pgss","isr","intelligence surveillance reconnaissance",
+    "cyber intelligence","threat intelligence","vehicle tracking","gps tracking","geolocation"
+  ]
+}

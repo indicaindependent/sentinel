@@ -1,0 +1,204 @@
+{
+  "started": "2026-05-12T17:22:55.724987Z",
+  "vendors": {
+    "Palantir": {
+      "kept": 384,
+      "filtered": 0,
+      "duplicates": 23
+    },
+    "Clearview AI": {
+      "kept": 20,
+      "filtered": 0,
+      "duplicates": 0
+    },
+    "Axon": {
+      "kept": 631,
+      "filtered": 2792,
+      "duplicates": 102
+    },
+    "Cellebrite": {
+      "kept": 1837,
+      "filtered": 0,
+      "duplicates": 1
+    },
+    "Anduril": {
+      "kept": 262,
+      "filtered": 0,
+      "duplicates": 0
+    },
+    "Pen-Link": {
+      "kept": 746,
+      "filtered": 0,
+      "duplicates": 6
+    },
+    "Magnet Forensics": {
+      "kept": 495,
+      "filtered": 0,
+      "duplicates": 0
+    },
+    "Verint": {
+      "kept": 219,
+      "filtered": 33,
+      "duplicates": 0
+    },
+    "Grayshift": {
+      "kept": 0,
+      "filtered": 0,
+      "duplicates": 144
+    },
+    "NSO Group": {
+      "kept": 2,
+      "filtered": 121,
+      "duplicates": 0
+    },
+    "Paragon Solutions": {
+      "kept": 84,
+      "filtered": 0,
+      "duplicates": 15
+    },
+    "NICE Systems": {
+      "kept": 62,
+      "filtered": 25,
+      "duplicates": 0
+    },
+    "Babel Street": {
+      "kept": 64,
+      "filtered": 0,
+      "duplicates": 0
+    },
+    "Vigilant Solutions": {
+      "kept": 56,
+      "filtered": 0,
+      "duplicates": 0
+    },
+    "Dataminr": {
+      "kept": 42,
+      "filtered": 0,
+      "duplicates": 0
+    },
+    "Cognyte": {
+      "kept": 10,
+      "filtered": 0,
+      "duplicates": 13
+    },
+    "ShotSpotter": {
+      "kept": 13,
+      "filtered": 0,
+      "duplicates": 0
+    },
+    "Cobwebs": {
+      "kept": 7,
+      "filtered": 0,
+      "duplicates": 0
+    },
+    "SoundThinking": {
+      "kept": 5,
+      "filtered": 0,
+      "duplicates": 13
+    },
+    "Motorola Solutions": {
+      "kept": 6647,
+      "filtered": 1232,
+      "duplicates": 251
+    },
+    "L3Harris": {
+      "kept": 5288,
+      "filtered": 1755,
+      "duplicates": 2957
+    },
+    "Peraton": {
+      "kept": 5185,
+      "filtered": 2253,
+      "duplicates": 2562
+    },
+    "Booz Allen": {
+      "kept": 5587,
+      "filtered": 977,
+      "duplicates": 3436
+    },
+    "Leidos": {
+      "kept": 4529,
+      "filtered": 1774,
+      "duplicates": 3697
+    },
+    "CACI International": {
+      "kept": 2529,
+      "filtered": 1237,
+      "duplicates": 2618
+    },
+    "ManTech": {
+      "kept": 2006,
+      "filtered": 502,
+      "duplicates": 2027
+    },
+    "SAIC": {
+      "kept": 954,
+      "filtered": 1941,
+      "duplicates": 7105
+    },
+    "General Dynamics Information Technology": {
+      "kept": 4886,
+      "filtered": 1103,
+      "duplicates": 4011
+    },
+    "Thundercat Technology": {
+      "kept": 9554,
+      "filtered": 380,
+      "duplicates": 66
+    },
+    "TSYMMETRY": {
+      "kept": 25,
+      "filtered": 14,
+      "duplicates": 0
+    },
+    "I3 Federal": {
+      "kept": 1263,
+      "filtered": 119,
+      "duplicates": 3
+    },
+    "V3GATE": {
+      "kept": 3822,
+      "filtered": 111,
+      "duplicates": 8
+    },
+    "Affigent": {
+      "kept": 7135,
+      "filtered": 495,
+      "duplicates": 493
+    },
+    "West Publishing": {
+      "kept": 501,
+      "filtered": 5128,
+      "duplicates": 86
+    },
+    "LexisNexis": {
+      "kept": 249,
+      "filtered": 354,
+      "duplicates": 20
+    },
+    "Thomson Reuters": {
+      "kept": 128,
+      "filtered": 726,
+      "duplicates": 7
+    },
+    "Forensic Logic": {
+      "kept": 12,
+      "filtered": 0,
+      "duplicates": 0
+    },
+    "RELX": {
+      "kept": 708,
+      "filtered": 3120,
+      "duplicates": 92
+    },
+    "Oracle America": {
+      "kept": 604,
+      "filtered": 991,
+      "duplicates": 59
+    }
+  },
+  "finished": "2026-05-12T18:05:45.903107Z",
+  "total_kept": 66551,
+  "total_filtered": 27183,
+  "total_duplicates": 29815
+}

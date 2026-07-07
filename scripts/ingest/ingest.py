@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 Sentinel USAspending Ingest v3 — production-grade, runs on OptiPlex.
@@ -21,7 +22,7 @@ UA = "Sentinel-Ingest/3.0 (sentinel.osintnet.uk)"
 SLEEP = 0.6
 MAX_PAGES_PER_VENDOR = 100  # USAspending caps at ~10k records via paging
 
-BASE = "/home/ptsdpete/sentinel_ingest"
+BASE = os.environ.get("SENTINEL_INGEST_BASE", "./sentinel_ingest")
 
 with open(f"{BASE}/filters.json") as f:
     F = json.load(f)

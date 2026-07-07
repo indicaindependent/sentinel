@@ -78,7 +78,8 @@ async def lifespan(app: FastAPI):
     db_client.close()
 
 app = FastAPI(title="SENTINEL API", lifespan=lifespan)
-app.mount("/static", StaticFiles(directory="/home/ptsdpete/sentinel/static"), name="static")
+SENTINEL_BASE = os.environ.get("SENTINEL_BASE", os.path.dirname(os.path.abspath(__file__)))
+app.mount("/static", StaticFiles(directory=os.path.join(SENTINEL_BASE, "static")), name="static")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 # ── ADK runner (lazy init) ────────────────────────────────────────────────────
@@ -163,7 +164,7 @@ def normalize(c):
 @app.get("/sw.js")
 async def service_worker():
     from fastapi.responses import FileResponse
-    return FileResponse("/home/ptsdpete/sentinel/static/sw.js", media_type="application/javascript")
+    return FileResponse(os.path.join(SENTINEL_BASE, "static", "sw.js"), media_type="application/javascript")
 @app.get("/", response_class=HTMLResponse)
 async def index():
     p = os.path.join(os.path.dirname(__file__), "index.html")

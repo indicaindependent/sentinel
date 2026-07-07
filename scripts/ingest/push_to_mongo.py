@@ -20,7 +20,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import motor.motor_asyncio
 
-load_dotenv('/home/ptsdpete/sentinel/.env')
+load_dotenv(os.environ.get('SENTINEL_ENV', '.env'))
 MONGO_URI = os.environ['MONGO_URI']
 
 # US state centroid coords for geo-mapping (lat, lng → as [lng, lat] GeoJSON)
@@ -111,7 +111,7 @@ def transform(record):
 
 
 async def main():
-    input_file = sys.argv[1] if len(sys.argv) > 1 else "/home/ptsdpete/sentinel_ingest/harvested.jsonl"
+    input_file = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("SENTINEL_HARVEST", "./sentinel_ingest/harvested.jsonl")
     dry_run = '--dry' in sys.argv
 
     client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_URI)
